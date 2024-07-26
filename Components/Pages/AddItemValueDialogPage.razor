@@ -1,0 +1,77 @@
+﻿@page "/itemDialogPage"
+@inject DialogService dialogService
+@inject NotificationService notificationService
+
+<RadzenStack  class="rz-border-radius-1" Style="height:100%; width:100%;">
+    <RadzenTemplateForm id="test" TItem="ItemValueVo" Data=@item Submit=@OnSubmit>
+        <RadzenCard >
+            <RadzenText TextStyle="TextStyle.Subtitle2" TagName="TagName.H3" Class="rz-mt-6">Application Name</RadzenText>
+            <RadzenTextBox @bind-Value="item.applicationName" Style="width: 100%" aria-label="App TextBox" Disabled="@isUpdate" @ref="AppNameRef"/>
+            @* <RadzenTextBox @bind-Value="item.applicationName" Style="width: 100%" aria-label="App TextBox" Disabled="@isUpdate" @ref="AppNameRef" @attributes="GetTextBoxStyle(item.applicationName)"/> *@
+            <RadzenText TextStyle="TextStyle.Subtitle2" TagName="TagName.H3" Class="rz-mt-6">Item Name</RadzenText>
+            <RadzenTextBox @bind-Value="item.itemName" Style="width: 100%" aria-label="ItemName TextBox" Disabled="@isUpdate"/>
+            <RadzenText TextStyle="TextStyle.Subtitle2" TagName="TagName.H3" Class="rz-mt-6">Item Value</RadzenText>
+            <RadzenTextBox @bind-Value="item.itemValue" Style="width: 100%" aria-label="ItemValue TextBox" />
+            <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem" Class="rz-mt-6" JustifyContent="JustifyContent.Center" AlignItems="AlignItems.Center">
+                <RadzenButton ButtonType="ButtonType.Submit" Icon="add" Text="ADD" Visible="@isAdd"/>
+                <RadzenButton ButtonType="ButtonType.Submit" Icon="update" Text="UPDATE" Visible="isUpdate"/>
+                <RadzenButton Text="Cancel" Icon="cancel" ButtonStyle="ButtonStyle.Secondary" Click="@(args => dialogService.Close(null))" />
+            </RadzenStack>
+        </RadzenCard>
+    </RadzenTemplateForm>
+</RadzenStack>
+
+@code {
+    private bool isAdd = false;
+    private bool isUpdate = false;
+    private RadzenTextBox? AppNameRef;
+    ItemValueVo item = new ItemValueVo();
+    [Parameter] public string ApplicationName { get; set; } = string.Empty;
+    [Parameter] public string ItemName { get; set; } = string.Empty;
+    [Parameter] public string ItemValue { get; set; } = string.Empty;
+
+    protected override void OnInitialized()
+    {
+        base.OnInitialized();
+        item.applicationName = ApplicationName;
+        item.itemName = ItemName;
+        item.itemValue = ItemValue;
+        if(ApplicationName == string.Empty)
+        {
+            isAdd = true;
+            isUpdate = false;
+        }
+        else
+        {
+            isAdd = false;
+            isUpdate = true;
+        }
+    }
+
+    private Dictionary<string, object> GetTextBoxStyle(string value)
+    {
+        var style = new Dictionary<string, object>();
+
+        //Can Change the style like this.
+        if (string.IsNullOrWhiteSpace(value))
+        {
+            style["style"] = "border: 2px solid red; width : 100%;";
+        }
+
+        return style;
+    }
+
+    private async void OnSubmit(ItemValueVo arg)
+    {
+        if(arg.applicationName == string.Empty || arg.itemName == string.Empty || arg.itemValue == string.Empty)
+        {
+            if(AppNameRef != null)
+            {
+                await AppNameRef.FocusAsync();
+            }
+            notificationService.Notify(new NotificationMessage { Severity = NotificationSeverity.Warning, Summary = "Warning Summary", Detail = "Warning Detail", Duration = 4000 });
+            return;
+        }
+        dialogService.Close(item);
+    }
+}

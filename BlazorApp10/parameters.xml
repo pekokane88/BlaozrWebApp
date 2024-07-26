@@ -1,0 +1,5 @@
+﻿<parameters>
+  <parameter name="IIS Web Application Name" value="sc-manager" tags="IisApp">
+    <parameterEntry kind="ProviderPath" scope="IisApp" match="^D:\\BlazorApp10\\obj\\Release\\net8\.0\\PubTmp\\Out\\$" />
+  </parameter>
+</parameters>

@@ -1,0 +1,151 @@
+﻿@page "/itemValueList"
+@rendermode InteractiveServer
+@implements IDisposable
+@inject NotificationService notificationService
+@inject DialogService dialogService
+@inject PersistentComponentState PersistentComponentState
+@inject IWebService webService
+
+<PageTitle>Item Value List</PageTitle>
+<h3>ItemValueListPage</h3>
+
+@if (itemValueVos == null)
+{
+    <p><em>Loading...</em></p>
+}
+else
+{
+    <RadzenStack Orientation="Orientation.Vertical">
+        <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.End" AlignItems="AlignItems.Center">
+            <RadzenButton Click=@OnAddBtnClick Text="Add" Icon="add" ButtonStyle="ButtonStyle.Primary" />
+            <RadzenButton Click=@OnUpdateBtnClick Text="Update" Icon="update" ButtonStyle="ButtonStyle.Success" />
+            <RadzenButton Click=@OnDeleteBtnClick Text="Delete" Icon="delete" ButtonStyle="ButtonStyle.Danger" />
+        </RadzenStack>
+        <RadzenStack>
+            <RadzenDataGrid AllowFiltering="true" FilterMode="FilterMode.Advanced" FilterPopupRenderMode="PopupRenderMode.OnDemand" FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
+                            AllowSorting="true" PageSize="10" AllowPaging="true" ShowPagingSummary="true" Data="@itemValueVos" TItem="ItemValueVo" SelectionMode="DataGridSelectionMode.Single" @bind-Value=@selectedItem>
+                <Columns>
+                    <RadzenDataGridColumn TItem="ItemValueVo" Property="applicationName" Title="App Name" />
+                    <RadzenDataGridColumn TItem="ItemValueVo" Property="itemName" Title="Item Name" />
+                    <RadzenDataGridColumn TItem="ItemValueVo" Property="itemValue" Title="Item Value" />
+                </Columns>
+            </RadzenDataGrid>
+        </RadzenStack>
+    </RadzenStack>
+}
+
+@code {
+    private IList<ItemValueVo>? selectedItem;
+    private ItemValueVo[]? itemValueVos;
+    private PersistingComponentStateSubscription persistingSubscription;
+    string test = "";
+    protected override async Task OnInitializedAsync()
+    {
+        itemValueVos = await webService.GetItemList();
+        test = "completed";
+        // persistingSubscription = PersistentComponentState.RegisterOnPersisting(PersistData);
+        // if (!PersistentComponentState.TryTakeFromJson<ItemValueVo[]>(nameof(itemValueVos), out itemValueVos))
+        // {
+        //     itemValueVos = await webService.GetItemList();
+        //     test = "completed";
+        // }
+    }
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        // 초기화 코드
+    }
+    private Task PersistData()
+    {
+        PersistentComponentState.PersistAsJson(nameof(itemValueVos), itemValueVos);
+        return Task.CompletedTask;
+    }
+    void IDisposable.Dispose() => persistingSubscription.Dispose();
+    void ClickedEvent()
+    {
+        notificationService.Notify(new NotificationMessage { Style = "position: fixed; top:10px; right:10px; z-index: 1050;", Severity = NotificationSeverity.Error, Summary = "Error", Detail = $"Error Info : ttt" });
+    }
+    private async Task OnAddBtnClick()
+    {
+        var parameters = new Dictionary<string, object>
+       {
+           { "ApplicationName", string.Empty },
+           { "ItemName", string.Empty },
+           { "ItemValue", string.Empty }
+       };
+        var result = await dialogService.OpenAsync<AddItemValueDialogPage>("Add Item", parameters);
+        if (result != null)
+        {
+            ItemValueVo newItem = (ItemValueVo)result;
+            bool addResult = await webService.AddUpdateItem(newItem);
+            if (addResult)
+            {
+                notificationService.Notify(new NotificationMessage { Style = "position: fixed; top:10px; right:10px; z-index: 1050;", Severity = NotificationSeverity.Success, Summary = "Add Success", Detail = "Item added successfully.", Duration = 3000 });
+                itemValueVos = await webService.GetItemList();
+                StateHasChanged();
+            }
+            else
+            {
+                notificationService.Notify(new NotificationMessage { Style = "position: fixed; top:10px; right:10px; z-index: 1050;", Severity = NotificationSeverity.Error, Summary = "Add Failed", Detail = "Failed to add item.", Duration = 3000 });
+            }
+        }
+    }
+    private async Task OnUpdateBtnClick()
+    {
+        if (selectedItem == null || selectedItem.Count == 0)
+        {
+            notificationService.Notify(new NotificationMessage { Style = "position: fixed; top:10px; right:10px; z-index: 1050;", Severity = NotificationSeverity.Error, Summary = "Button Clicked", Detail = "수정 할 Item을 선택하세요." });
+            return;
+        }
+        var parameters = new Dictionary<string, object>
+       {
+           { "ApplicationName", selectedItem[0].applicationName },
+           { "ItemName", selectedItem[0].itemName },
+           { "ItemValue", selectedItem[0].itemValue }
+       };
+        var result = await dialogService.OpenAsync<AddItemValueDialogPage>("Update Item", parameters);
+        if (result != null)
+        {
+            ItemValueVo newItem = (ItemValueVo)result;
+            bool addResult = await webService.AddUpdateItem(newItem);
+            if (addResult)
+            {
+                notificationService.Notify(new NotificationMessage { Style = "position: fixed; top:10px; right:10px; z-index: 1050;", Severity = NotificationSeverity.Success, Summary = "Update Success", Detail = "Item updated successfully.", Duration = 3000 });
+                itemValueVos = await webService.GetItemList();
+                StateHasChanged();
+            }
+            else
+            {
+                notificationService.Notify(new NotificationMessage { Style = "position: fixed; top:10px; right:10px; z-index: 1050;", Severity = NotificationSeverity.Error, Summary = "Update Failed", Detail = "Failed to update item.", Duration = 3000 });
+            }
+        }
+    }
+    private async Task OnDeleteBtnClick()
+    {
+        if (selectedItem == null || selectedItem.Count == 0)
+        {
+            notificationService.Notify(new NotificationMessage { Style = "position: fixed; top:10px; right:10px; z-index: 1050;", Severity = NotificationSeverity.Error, Summary = "Button Clicked", Detail = "삭제할 Item을 선택하세요." });
+            return;
+        }
+
+        int index = selectedItem[0].Index;
+        string app = selectedItem[0].applicationName;
+        string name = selectedItem[0].itemName;
+        string value = selectedItem[0].itemValue;
+        string inform = $"Application : <span style='color:tomato;'><strong>{app}</strong></span><br />Item Name : <span><strong>{name}</strong></span><br />Item Value : <span><strong>{value}</strong></span>";
+        bool? isConfirm = await dialogService.Confirm($"해당 item 을 삭제하시겠습니까?<br />{inform}", "Delete", new ConfirmOptions() { OkButtonText = "Yes", CancelButtonText = "No" });
+        if (isConfirm == true)
+        {
+            bool deleteResult = await webService.DeleteItem(selectedItem[0]);
+            if (deleteResult)
+            {
+                notificationService.Notify(new NotificationMessage { Style = "position: fixed; top:10px; right:10px; z-index: 1050;", Severity = NotificationSeverity.Success, Summary = "Delete Success", Detail = "Delete Success", Duration = 3000 });
+                itemValueVos = await webService.GetItemList();
+                StateHasChanged();
+            }
+            else
+            {
+                notificationService.Notify(new NotificationMessage { Style = "position: fixed; top:10px; right:10px; z-index: 1050;", Severity = NotificationSeverity.Error, Summary = "Delete Failed", Detail = "Delete Failed.", Duration = 3000 });
+            }
+        }
+    }
+}
