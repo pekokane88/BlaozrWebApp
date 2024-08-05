@@ -1,0 +1,34 @@
+﻿@page "/wire"
+@rendermode InteractiveServer
+<PageTitle>Wire</PageTitle>
+
+<h3>WirePage</h3>
+
+<RadzenStack Orientation="Orientation.Horizontal" Style="width:100%;" Gap="20px" JustifyContent="JustifyContent.SpaceBetween" AlignItems="AlignItems.Center">
+    <RadzenCard Style="width:40%;">
+        <RadzenText TextStyle="TextStyle.Subtitle2" TagName="TagName.H3">Wire Value</RadzenText>
+        <RadzenTextArea Cols="30" Rows="20" Style="width: 100%" aria-label="Auto-resize" @bind-Value=@beforeWire/>
+    </RadzenCard>
+    <RadzenButton Click=@OnConvertClick Text="Convert" Icon="update" ButtonStyle="ButtonStyle.Info" Style="height:50%;" IsBusy="false"></RadzenButton>
+    <RadzenCard Style="width:40%;">
+        <RadzenText TextStyle="TextStyle.Subtitle2" TagName="TagName.H3">Auto-resize TextArea</RadzenText>
+        <RadzenTextArea Cols="30" Rows="20" Style="width: 100%" aria-label="Auto-resize" @bind-Value=@afterWire/>
+    </RadzenCard>
+</RadzenStack>
+@code {
+    private string beforeWire = string.Empty;
+    private string afterWire = string.Empty;
+
+    private void OnConvertClick()
+    {
+        afterWire = string.Empty;
+        string[] temp = beforeWire.Split("\r\n");
+        if (temp.Length > 0)
+        {
+            for(int i = 0 ;i<temp.Length; i++)
+            {
+            }
+        }
+        return;
+    }
+}

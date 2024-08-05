@@ -5,6 +5,7 @@
 @inject DialogService dialogService
 @inject PersistentComponentState PersistentComponentState
 @inject IWebService webService
+@inject IHttpClientFactory httpClientFactory
 
 <PageTitle>Item Value List</PageTitle>
 <h3>ItemValueListPage</h3>
@@ -41,7 +42,9 @@ else
     string test = "";
     protected override async Task OnInitializedAsync()
     {
-        itemValueVos = await webService.GetItemList();
+        var client = httpClientFactory.CreateClient("SCApi");
+        itemValueVos = await client.GetFromJsonAsync<ItemValueVo[]>("GetItemValueList");
+        //itemValueVos = await webService.GetItemList();
         test = "completed";
         // persistingSubscription = PersistentComponentState.RegisterOnPersisting(PersistData);
         // if (!PersistentComponentState.TryTakeFromJson<ItemValueVo[]>(nameof(itemValueVos), out itemValueVos))

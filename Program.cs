@@ -3,6 +3,7 @@ using BlazorApp10.Services;
 using Radzen;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Hosting;
+using BlazorApp10.Hubs;
 
 
 var builder = WebApplication.CreateBuilder(args);
@@ -10,6 +11,7 @@ var builder = WebApplication.CreateBuilder(args);
 // Add services to the container.
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
+builder.Services.AddServerSideBlazor();
 builder.Services.AddSignalR(); // Add SignalR
 builder.Services.AddRadzenComponents();
 builder.Services.AddScoped<Radzen.ThemeService>();
@@ -18,8 +20,12 @@ builder.Services.AddScoped<Radzen.NotificationService>();
 builder.Services.AddScoped<Radzen.ContextMenuService>();
 builder.Services.AddScoped<Radzen.TooltipService>();
 builder.Services.AddScoped<IWebService, WebService>();
-builder.Services.AddServerSideBlazor()
-    .AddCircuitOptions(options => { options.DetailedErrors = true; });
+builder.Services.AddHttpClient("SCApi", client =>
+{
+    client.BaseAddress = new Uri("http://10.101.5.131:8280/SmartConsoleWebService/fa/");
+});
+//builder.Services.AddServerSideBlazor()
+//    .AddCircuitOptions(options => { options.DetailedErrors = true; });
 
 var app = builder.Build();
 
@@ -35,16 +41,12 @@ app.UseHttpsRedirection();
 
 app.UseStaticFiles();
 app.UseAntiforgery();
-//app.UseRouting();
-
-//app.UseEndpoints(endpoints =>
-//{
-//    endpoints.MapBlazorHub(); // Blazor Hub ╦егн
-//    endpoints.MapFallbackToPage("/_Host");
-//});
 
 app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode();
+
+//Add SignalR Hub
+app.MapHub<ChatHub>("/chathub");
 
 
 app.Run();
